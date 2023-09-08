@@ -1,13 +1,33 @@
 <!-- resources/views/bid-form.blade.php -->
 
-<!DOCTYPE html>
-<html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}"> 
     <title>Bid Form</title>
     <style>
+         /* Add some styling for the notification table */
+         .notification {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .notification p {
+            margin: 0;
+        }
+
+        /* Style for the table header */
+        .table-header {
+            font-weight: bold;
+        }
+
+        /* Style for table data */
+        .table-data {
+            font-size: 14px;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -90,15 +110,31 @@
     </form>
 
     <div id="response" class="success"></div>
+<div id="bid-saved-response" class="success"></div>
+<h1>Notifications</h1>
+<div id="notification-table">
+    @foreach($notifications as $notification)
+        <div class="notification">
+            <p class="table-header">User ID:{{ $notification->user_id }}</p>
+            
+            <p class="table-header">Latest Bid Price:{{ $notification->latest_bid_price }}</p>
+            
+            <p class="table-header">User Last Bid Price:{{ $notification->user_last_bid_price }}</p>
+            
+            <p class="table-header">Created At:{{ $notification->created_at }}</p>
+            
+        </div>
+    @endforeach
+</div>
 
     <script>
         document.getElementById('bid-form').addEventListener('submit', function (event) {
             event.preventDefault();
-
+    
             // Validate the price input for two decimal places
-        // Automatically format the price input to have two decimal places
-        const priceInput = document.getElementById('price');
-        priceInput.value = parseFloat(priceInput.value).toFixed(2);
+            // Automatically format the price input to have two decimal places
+            const priceInput = document.getElementById('price');
+            priceInput.value = parseFloat(priceInput.value).toFixed(2);
     
             const formData = new FormData(this);
     
@@ -115,33 +151,28 @@
                 responseDiv.style.display = 'block';
     
                 if (data.message === 'Success') {
-                    // Handle success
+                    // Handle success for bid submission
                     responseDiv.innerHTML = `Bid submitted successfully! 
                     User: ${data.data.full_name}, Price: ${data.data.price}`;
                     responseDiv.className = 'success';
                 } else if (data.errors && data.errors.price) {
                     // Handle price validation errors
-                    responseDiv.innerHTML = `Validation failed: ${data.errors.price[0]}`;
+                    responseDiv.innerHTML = ` ${data.errors.price[0]}`;
                     responseDiv.className = 'error';
                 } else if (data.message === 'User not found') {
                     // Handle user not found error
                     responseDiv.innerHTML = 'User not found';
-                    responseDiv.className = 'error';
-                } else {
-                    // Handle other errors
-                    let errorMessage = data.message || 'Unknown error occurred.';
-                    responseDiv.innerHTML = errorMessage;
                     responseDiv.className = 'error';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 const responseDiv = document.getElementById('response');
-                responseDiv.innerHTML = 'An error occurred while processing your request.';
+                responseDiv.innerHTML = 'Please check your userID if it exists';
                 responseDiv.className = 'error';
                 responseDiv.style.display = 'block';
             });
         });
     </script>
+    
 </body>
-</html>

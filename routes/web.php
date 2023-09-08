@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BidController;
+use App\Http\Controllers\NotificationController;
+
 
 
 /*
@@ -21,7 +23,8 @@ Route::get('/', function () {
 
 Route::post('/bid', [BidController::class, 'create']);
 
-Route::get('/bid-form', function () {
-    return view('bid-form');
-});
+
+    Route::get('/bid-form', [NotificationController::class, 'index']);
+
+
 
