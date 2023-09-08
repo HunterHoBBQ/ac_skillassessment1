@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
-use Illuminate\Http\Request;
 use App\Models\Notification;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class BidController extends Controller
 {
-
-public function create(Request $request)
+    public function create(Request $request)
 {
     // Validate the request data
     $request->validate([
@@ -22,35 +22,39 @@ public function create(Request $request)
     $latestBidPrice = Bid::max('price');
     $userLastBidPrice = Bid::where('user_id', $request->user_id)->max('price');
 
-// Check if there is a user_last_bid_price, if not, set it to 0
+    // Format the bid price to have exactly two decimal places
+    $formattedPrice = $request->price;
+
+    // Check if there is a user_last_bid_price, if not, set it to 0
     $userLastBidPrice = $userLastBidPrice ?? 0.00;
 
     // Validate if the bid price is higher than the latest bid price
-    if ($request->price <= $latestBidPrice) {
+    if ($formattedPrice <= $latestBidPrice) {
         return response()->json([
             'message' => 'The bid price cannot be lower than ' . $latestBidPrice,
             'errors' => [
                 'price' => [
-                    'The bid price cannot be lower than ' . $latestBidPrice
-                ]
-            ]
+                    'The bid price cannot be lower than ' . $latestBidPrice ." vs ". $formattedPrice,
+                ],
+            ],
         ], 422);
     }
 
     // Create the bid
     $bid = Bid::create([
         'user_id' => $request->user_id,
-        'price' => $request->price,
+        'price' => $formattedPrice,
     ]);
 
+    // Create the notification
     $saveNotification = Notification::create([
         'user_id' => $request->user_id,
         'latest_bid_price' => $latestBidPrice,
-        'user_last_bid_price' => $userLastBidPrice,
+        'user_last_bid_price' => $formattedPrice,
     ]);
 
-    // Retrieve the full name of the user (assuming a User model with first_name and last_name fields)
-    $user = \App\Models\User::find($request->user_id);
+    // Retrieve the full name of the user
+    $user = User::find($request->user_id);
     $fullName = $user->first_name . ' ' . $user->last_name;
 
     // Return the success response
@@ -58,9 +62,10 @@ public function create(Request $request)
         'message' => 'Success',
         'data' => [
             'full_name' => $fullName,
-            'price' => number_format($request->price, 2),
-        ]
+            'price' => $formattedPrice,
+        ],
     ], 201);
 }
 
 }
+
